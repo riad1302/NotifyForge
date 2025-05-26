@@ -21,7 +21,6 @@ This project demonstrates:
 
 ## 🚀 Setup Instructions
 
-1. **Clone the Repository**
    ```bash
    git clone https://github.com/riad1302/NotifyForge.git
    cd NotifyForge
