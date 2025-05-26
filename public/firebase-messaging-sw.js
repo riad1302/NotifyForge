@@ -28,6 +28,6 @@ messaging.onBackgroundMessage(function(payload) {
 self.addEventListener('notificationclick', event => {
     event.notification.close();
     event.waitUntil(
-        clients.openWindow('https://your-site.com') // Replace with your actual site URL
+        clients.openWindow('http://localhost:8080') // Replace with your actual site URL
     );
 });
