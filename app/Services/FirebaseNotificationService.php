@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Interface\NotificationInterface;
 use CodeIgniter\CLI\CLI;
 use Config\Firebase;
+use Google\Client;
 
 class FirebaseNotificationService implements NotificationInterface
 {
@@ -24,6 +25,11 @@ class FirebaseNotificationService implements NotificationInterface
         $success = 0;
         $fail = 0;
 
+        $credentialsFilePath = FCPATH . 'firebase.json';
+
+        $client = new Client();
+
+
         try {
             $queueLength = $redis->llen($queueKey);
 
@@ -39,37 +45,66 @@ class FirebaseNotificationService implements NotificationInterface
                     continue;
                 }
 
-                $data = [
-                    'to' => $user['device_token'],
-                    'notification' => [
-                        'title' => $title,
-                        'body'  => $body,
-                    ],
+                $client->setAuthConfig($credentialsFilePath);
+
+                $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
+                $client->refreshTokenWithAssertion();
+                $token = $client->getAccessToken();
+
+                $access_token = $token['access_token'];
+
+                // Set up the HTTP headers
+                $headers = [
+                    "Authorization: Bearer $access_token",
+                    'Content-Type: application/json'
                 ];
 
-                $ch = curl_init('https://fcm.googleapis.com/fcm/send');
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: key=' . $this->serverKey,
-                    'Content-Type: application/json',
-                ]);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+                $data = [
+                    "message" => [
+                        "token" => $user['device_token'],
+                        "notification" => [
+                            "title" => $title,
+                            "body" => $body,
 
-                $result = curl_exec($ch);
+                        ],
+                        "apns" => [
+                            "payload" => [
+                                "aps" => [
+                                    "sound" => "default"
+                                ]
+                            ]
+                        ]
+                    ]
+                ];
+                $payload = json_encode($data);
+
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/v1/projects/laravel-push-b35c9/messages:send');
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+                //curl_setopt($ch, CURLOPT_VERBOSE, true); // Enable verbose output for debugging
+                $response = curl_exec($ch);
                 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 $curlError = curl_error($ch);
                 curl_close($ch);
 
+
                 if ($httpCode === 200) {
                     $success++;
+//                    $redis->rPush('notification_sse_queue', json_encode([
+//                        'title' => $title,
+//                        'body' => $body,
+//                    ]));
                 } else {
                     $fail++;
                     CLI::error("Failed to send to: {$user['device_token']} | HTTP Code: $httpCode | cURL Error: $curlError");
                 }
             }
 
-            CLI::write("Notifications sent to $success users | Failed for $fail", 'yellow');
+            //CLI::write("Notifications sent to $success users | Failed for $fail", 'yellow');
 
         } catch (\Throwable $e) {
             CLI::error("An error occurred while sending notifications: " . $e->getMessage());

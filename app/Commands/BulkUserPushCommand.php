@@ -70,11 +70,11 @@ class BulkUserPushCommand extends BaseCommand
 
         $redis->del('user_queue');
 
-        for ($i = 1; $i <= 12000; $i++) {
+        for ($i = 1; $i <= 1; $i++) {
             $user = [
                 'name'  => $faker->name,
                 'email' => $faker->safeEmail,
-                'device_token' => $faker->uuid(),
+                'device_token' => 'cBp-Dmvkjj5JGcS0KpHFT8:APA91bHJYHTwxI2KqoAskW9McxjZL5E97Rbbvjn0QF02i-VGWspbh-HVmfDjIrVcDTTfdIFqF_xs9lwNdBhYcLDN3ANiz9UykLBQZnNTjgqPSs10KSWITeo',
             ];
 
             $dataBatch[] = $user;
