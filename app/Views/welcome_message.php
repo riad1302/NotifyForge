@@ -10,8 +10,7 @@
 <body class="flex items-center justify-center h-screen bg-gray-100 text-gray-800">
 <div class="bg-white p-10 rounded shadow max-w-md text-center">
     <h1 class="text-2xl font-bold mb-4">Firebase Push Notification</h1>
-    <button id="enableNotifications" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 font-semibold">Enable Notifications</button>
-    <p id="status" class="mt-4 text-sm text-gray-600">Awaiting user action...</p>
+    <p id="status" class="text-sm text-gray-600">Checking notification permissions...</p>
     <pre id="token" class="mt-2 text-xs text-left break-all whitespace-pre-wrap hidden bg-gray-200 p-2 rounded"></pre>
 </div>
 
@@ -31,64 +30,71 @@
 
     const status = document.getElementById('status');
     const tokenDisplay = document.getElementById('token');
-    const enableBtn = document.getElementById('enableNotifications');
 
-    enableBtn.addEventListener('click', async () => {
+    async function getAndSendToken() {
         try {
             const permission = await Notification.requestPermission();
+
             if (permission !== 'granted') {
-                status.textContent = 'Permission denied.';
+                status.textContent = 'Notification permission denied.';
                 return;
             }
 
             const token = await messaging.getToken({
-                vapidKey: "BCYqr3JWvqQg9tm2qTMk034I8fNzX7TogbxZMt9IJ5DIOAi-zpwxK5_SXjpkuoDqdgU6H6HqvTl5G2aE-3lEwbY" // Replace with your Web Push key from Firebase
+                vapidKey: "BCYqr3JWvqQg9tm2qTMk034I8fNzX7TogbxZMt9IJ5DIOAi-zpwxK5_SXjpkuoDqdgU6H6HqvTl5G2aE-3lEwbY"
             });
 
             if (token) {
+                status.textContent = 'Token generated successfully.';
                 tokenDisplay.textContent = token;
                 tokenDisplay.classList.remove('hidden');
-                status.textContent = "Token generated successfully.";
-                // Optionally send token to backend using fetch/ajax
+
+                // 🔁 Send token to your backend
+                await fetch('/save-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token: token })
+                });
+
             } else {
                 status.textContent = 'Failed to retrieve token.';
             }
-        } catch (e) {
-            console.error(e);
-            status.textContent = 'An error occurred.';
+        } catch (err) {
+            console.error(err);
+            status.textContent = 'Error getting token.';
         }
-    });
+    }
 
+    // Run immediately on page load
+    window.onload = () => {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                .then((reg) => {
+                    console.log('Service worker registered:', reg.scope);
+                    getAndSendToken(); // ✅ Fetch token after service worker is ready
+                })
+                .catch((err) => {
+                    console.error('Service worker registration failed:', err);
+                    status.textContent = 'Service worker failed.';
+                });
+        } else {
+            status.textContent = 'Service worker not supported.';
+        }
+    };
+
+    // Handle foreground messages
     messaging.onMessage((payload) => {
         console.log('Message received:', payload);
-
         const title = payload.notification?.title || 'Notification';
         const body = payload.notification?.body || 'You have a new message.';
-        //const icon = payload.notification?.icon || '/firebase-logo.png';
-        // If the browser window is not focused, show a desktop notification
-        if (document.visibilityState === 'hidden') {
-            if (Notification.permission === 'granted') {
-                new Notification(title, {
-                    body: body,
-                    //icon: icon
-                });
-            }
+        if (document.visibilityState === 'hidden' && Notification.permission === 'granted') {
+            new Notification(title, { body });
         } else {
-            // User is viewing the website
             alert(`Foreground message: ${title}`);
         }
     });
-
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/firebase-messaging-sw.js')
-            .then((reg) => {
-                console.log('Service worker registered:', reg.scope);
-            })
-            .catch((err) => {
-                console.error('Service worker registration failed:', err);
-            });
-    }
 </script>
 </body>
 </html>

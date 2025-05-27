@@ -3,6 +3,7 @@
 namespace Config;
 
 use App\Interface\NotificationInterface;
+use App\Services\FirebaseDBNotificationService;
 use App\Services\FirebaseNotificationService;
 use CodeIgniter\Config\BaseService;
 
@@ -40,5 +41,14 @@ class Services extends BaseService
         }
 
         return new FirebaseNotificationService();
+    }
+    public static function fireBaseDBNotificationService(bool $getShared = true): NotificationInterface
+    {
+        if ($getShared)
+        {
+            return static::getSharedInstance('FirebaseDBNotificationService');
+        }
+
+        return new FirebaseDBNotificationService();
     }
 }

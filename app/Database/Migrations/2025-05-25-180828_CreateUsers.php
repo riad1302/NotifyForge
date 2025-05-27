@@ -11,13 +11,15 @@ class CreateUsers extends Migration
         $this->forge->addField([
             'id'         => ['type' => 'INT', 'unsigned' => true, 'auto_increment' => true],
             'name'       => ['type' => 'VARCHAR', 'constraint' => 100],
-            'email'      => ['type' => 'VARCHAR', 'constraint' => 100],
+            'email'      => ['type' => 'VARCHAR', 'constraint' => 100, ],
+            'password'   => ['type' => 'VARCHAR', 'constraint' => 100],
             'device_token' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
             'created_at' => ['type' => 'DATETIME', 'null' => true],
             'updated_at' => ['type' => 'DATETIME', 'null' => true],
         ]);
 
         $this->forge->addKey('id', true); // Primary key
+        $this->forge->addUniqueKey('email');
         $this->forge->createTable('users');
     }
 
