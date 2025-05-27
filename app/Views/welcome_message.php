@@ -61,8 +61,24 @@
 
     messaging.onMessage((payload) => {
         console.log('Message received:', payload);
-        alert(`Foreground message: ${payload.notification.title}`);
+
+        const title = payload.notification?.title || 'Notification';
+        const body = payload.notification?.body || 'You have a new message.';
+        //const icon = payload.notification?.icon || '/firebase-logo.png';
+        // If the browser window is not focused, show a desktop notification
+        if (document.visibilityState === 'hidden') {
+            if (Notification.permission === 'granted') {
+                new Notification(title, {
+                    body: body,
+                    //icon: icon
+                });
+            }
+        } else {
+            // User is viewing the website
+            alert(`Foreground message: ${title}`);
+        }
     });
+
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/firebase-messaging-sw.js')

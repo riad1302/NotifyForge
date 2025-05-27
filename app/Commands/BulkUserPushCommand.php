@@ -74,7 +74,8 @@ class BulkUserPushCommand extends BaseCommand
             $user = [
                 'name'  => $faker->name,
                 'email' => $faker->safeEmail,
-                'device_token' => 'cBp-Dmvkjj5JGcS0KpHFT8:APA91bHJYHTwxI2KqoAskW9McxjZL5E97Rbbvjn0QF02i-VGWspbh-HVmfDjIrVcDTTfdIFqF_xs9lwNdBhYcLDN3ANiz9UykLBQZnNTjgqPSs10KSWITeo',
+                //'device_token' => 'cBp-Dmvkjj5JGcS0KpHFT8:APA91bHJYHTwxI2KqoAskW9McxjZL5E97Rbbvjn0QF02i-VGWspbh-HVmfDjIrVcDTTfdIFqF_xs9lwNdBhYcLDN3ANiz9UykLBQZnNTjgqPSs10KSWITeo',
+                'device_token' => 'c6Elsv0DPULKaOMlten1OS:APA91bELP7bUaon2CPRolAWsgUUz2Fxew10hHLi4GAuxkmY3SF0C5iPMxoL0ulkPC-OOzXgq_Y45S9B4WtYf6XqM2EUotRYRALREq5lRgKHRJiCD4KGvvSQ',
             ];
 
             $dataBatch[] = $user;
